@@ -1,14 +1,37 @@
 "use client";
 
 import { useState, type SubmitEvent } from "react";
+import { useRouter } from "next/navigation";
+
+import { authClient } from "@/lib/auth-client";
+
 import { OtpInput } from "../components/otp-input";
+import { toast } from "sonner";
 
 export function TwoFactorForm() {
+  const router = useRouter()
   const [code, setCode] = useState("");
 
-  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     console.log("Two factor code:", code);
+
+    const { data, error } = await authClient.twoFactor.verifyTotp({
+        code: code, // required, The otp code to verify.
+        trustDevice: false, // If true, the device will be trusted for 30 days. It'll be refreshed on every sign in request within this time.
+    });
+
+    if( error ) {
+      toast.error(error.message, {
+                    icon: null,
+                    position: 'top-center'
+                  });
+      return;
+    }
+
+    router.replace('/dashboard')
+
+
   }
 
   const isComplete = code.length === 6;
